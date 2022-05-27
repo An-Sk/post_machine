@@ -17,7 +17,7 @@ int main()
 	}
 	in.close();
 
-	std::cout << "Êîíåö ôàéëà" << std::endl;
+	std::cout << "ÃŠÃ®Ã­Ã¥Ã¶ Ã´Ã Ã©Ã«Ã " << std::endl;
 	return 0;
 
 }
