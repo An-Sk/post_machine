@@ -26,6 +26,10 @@ struct STATE_OUT
 };
 
 int main() {
+    int pr_on;
+    cout <<"how do you want to proccess:\n" << "0-automatically\n1-by pressing the button\n->";
+    cin >> pr_on;
+    cout<<'\n';
     STATE_OUT step;
     int tape_size=8;
     char tape[tape_size]={'0', '1', '0', '1', '0', '1', '1', '0'};
@@ -93,6 +97,7 @@ int main() {
         comi += 1;
         next: ;
         sleep(1);
+        if (pr_on==1)system("pause");
     }
     exit: ;
     return 0;
