@@ -1,54 +1,99 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
+#include <unistd.h>
 
 using namespace std;
 
+struct STATE_OUT
+{
+    
+    void print_tape(char tape[]){
+        for (int i = 0; tape[i] != '\0'; i++)
+        {
+            cout << tape[i];
+        }
+        cout << endl;
+    }
+    void print_rule(char rule[]){
+        for (int val = 0; val != 3; val++)
+            if (rule[val] == '0')
+                continue;
+            else
+                cout << rule[val] << ' ';
+        cout<<"\n\n";
+    }
+};
+
 int main() {
+    STATE_OUT step;
     int tape_size=8;
-    char tape[tape_size]={'#', '0', '0', '1', '0', '1', '1', '#'};
+    char tape[tape_size]={'0', '1', '0', '1', '0', '1', '1', '0'};
     int start_poz=3;
-    int start_rule=0;
-    //vector<vector<vector<char>>> rules = {{}};
-    char alph[] = { '0','1', '#'};
-    // 2-kolichestvo pravil, 3-kol peremen(alph), 3-(na sho zamenit, kuda idti, kakoe pravilo isp)
-    char rules[2][3][3]=
-            {
-            {{'1','l','0'},{'0','l','0'},{'1','r','1'}},
-            {{'0','r','1'},{'1','r','1'},{'#',0,'2'}}
-            };
-    for(auto const& value : tape)
-        cout << value;
-    cout << endl;
+    string start_rule;
+    char rules[10][3]={
+            {'-', '0', '0'},
+            {'?', '1', '3'},
+            {'X', '0', '0'},
+            {'+', '0', '0'},
+            {'?', '4', '6'},
+            {'X', '0', '0'},
+            {'+', '0', '0'},
+            {'?', '9', '1'},
+            {'V', '0', '0'},
+            {'!', '0', '0'}
+    };
+    int comi=0;
 
     string st(sizeof(tape)/ sizeof(tape[1]), '.');
     st[start_poz]='|';
-    cout<<st<<endl;
 
-    while (start_rule < (sizeof(rules)/ sizeof(rules[1])) )
+
+    while (1==1)
     {
-        int i;
-        for (i = 0; i < sizeof(tape)/ sizeof(tape[1]);i++){
-            if(tape[start_poz]==alph[i])
-                break;
-        }
-        tape[start_poz]= rules[start_rule][i][0];
-
-        for(auto const& value : tape)
-            cout << value ;
-        cout << endl;
-
+        step.print_tape(tape);
         cout<<st<<endl;
-        st[start_poz]='.';
-        if (rules[start_rule][i][1] == 'l')
-            start_poz -= 1;
-        else if (rules[start_rule][i][1] == 'r')
-            start_poz += 1;
-        start_rule = (int)rules[start_rule][i][2] - 48;
-        
-        st[start_poz]='|';
-    }
+        sleep(1);
 
+        switch (rules[comi][0]) {
+            case '-':
+                st[start_poz]='.';
+                start_poz -= 1;
+                break;
+            case '+':
+                st[start_poz]='.';
+                start_poz += 1;
+                break;
+            case 'X':
+                tape[start_poz] = '0';
+                break;
+            case 'V':
+                tape[start_poz] = '1';
+                break;
+            case '?':
+                step.print_tape(tape);
+                cout<<st<<endl;
+                step.print_rule(rules[comi]);
+                if (tape[start_poz]=='0')
+                    comi= (int)rules[comi][1] - 49;
+                else
+                    comi = (int)rules[comi][2] - 49;
+                goto next;
+                break;
+            case '!':
+                step.print_tape(tape);
+                cout<<st<<endl;
+                step.print_rule(rules[comi]);
+                goto exit;
+        }
+        st[start_poz]='|';
+        step.print_tape(tape);
+        cout<<st<<endl;
+        step.print_rule(rules[comi]);
+        comi += 1;
+        next: ;
+        sleep(1);
+    }
+    exit: ;
     return 0;
 }
