@@ -1,21 +1,24 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
+#include <vector>
 #include <unistd.h>
+#include <cassert>
 
 using namespace std;
 
 struct STATE_OUT
 {
     
-    void print_tape(char tape[]){
-        for (int i = 0; tape[i] != '\0'; i++)
+    void print_tape(vector<char>& tape){
+        for (int i = 0; i < tape.size(); i++)
         {
             cout << tape[i];
         }
         cout << endl;
     }
-    void print_rule(char rule[]){
+    void print_rule(vector <char> rule){
         for (int val = 0; val != 3; val++)
             if (rule[val] == '0')
                 continue;
@@ -26,46 +29,72 @@ struct STATE_OUT
 };
 
 int main() {
-    int pr_on;
+    int output_mode;
     cout <<"how do you want to proccess:\n" << "0-automatically\n1-by pressing the button\n->";
-    cin >> pr_on;
+    cin >> output_mode;
     cout<<'\n';
     STATE_OUT step;
-    int tape_size=8;
-    char tape[tape_size]={'0', '1', '0', '1', '0', '1', '1', '0'};
-    int start_poz=3;
-    string start_rule;
-    char rules[10][3]={
-            {'-', '0', '0'},
-            {'?', '1', '3'},
-            {'X', '0', '0'},
-            {'+', '0', '0'},
-            {'?', '4', '6'},
-            {'X', '0', '0'},
-            {'+', '0', '0'},
-            {'?', '9', '1'},
-            {'V', '0', '0'},
-            {'!', '0', '0'}
-    };
-    int comi=0;
 
-    string st(sizeof(tape)/ sizeof(tape[1]), '.');
-    st[start_poz]='|';
+    vector <char> tape;
+    int start_poz;
+    vector < vector <char> >rules;
+
+    string line, token;
+    char chr;
+    ifstream test_file ("test.txt");
+    if (test_file.is_open())
+    {
+        while ( getline (test_file, line) ) {
+            if (line.find("tape") != string::npos){
+
+                line = line.substr(line.find('(')+1, line.find(')')-line.find('(')-1);
+                stringstream ss(line);
+
+                while(getline(ss, token, ',')){
+                    assert(token.size() == 1);
+                    chr = token[0];
+                    tape.push_back(chr);
+                }
+
+            }else if(line.find("pos") != string::npos){
+                start_poz = stoi(line.substr(line.find(',') + 1));
+            }else{
+                vector<char> row;
+
+                for (char &c : line) {
+                    if (c != ' ') {
+                        row.push_back(c);
+                    }
+                }
+                while (row.size() != 3)
+                    row.push_back('0');
+
+                rules.push_back(row);
+                if (row[0]=='!')break;
+            }
+        }
+        test_file.close();
+    }
+    else cout << "Unable to open file";
+
+    int command_line_num=0;
+    string karetka(tape.size(), '.');
+    karetka[start_poz]='|';
 
 
     while (1==1)
     {
         step.print_tape(tape);
-        cout<<st<<endl;
+        cout << karetka << endl;
         sleep(1);
 
-        switch (rules[comi][0]) {
+        switch (rules[command_line_num][0]) {
             case '-':
-                st[start_poz]='.';
+                karetka[start_poz]='.';
                 start_poz -= 1;
                 break;
             case '+':
-                st[start_poz]='.';
+                karetka[start_poz]='.';
                 start_poz += 1;
                 break;
             case 'X':
@@ -76,29 +105,30 @@ int main() {
                 break;
             case '?':
                 step.print_tape(tape);
-                cout<<st<<endl;
-                step.print_rule(rules[comi]);
+                cout << karetka << endl;
+                step.print_rule(rules[command_line_num]);
                 if (tape[start_poz]=='0')
-                    comi= (int)rules[comi][1] - 49;
+                    command_line_num= (int)rules[command_line_num][1] - 49;
                 else
-                    comi = (int)rules[comi][2] - 49;
+                    command_line_num = (int)rules[command_line_num][2] - 49;
                 goto next;
                 break;
             case '!':
                 step.print_tape(tape);
-                cout<<st<<endl;
-                step.print_rule(rules[comi]);
+                cout << karetka << endl;
+                step.print_rule(rules[command_line_num]);
                 goto exit;
         }
-        st[start_poz]='|';
+        karetka[start_poz]='|';
         step.print_tape(tape);
-        cout<<st<<endl;
-        step.print_rule(rules[comi]);
-        comi += 1;
+        cout << karetka << endl;
+        step.print_rule(rules[command_line_num]);
+        command_line_num += 1;
         next: ;
         sleep(1);
-        if (pr_on==1)system("pause");
+        if (output_mode == 1)system("pause");
     }
     exit: ;
+
     return 0;
 }
