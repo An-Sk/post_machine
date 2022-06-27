@@ -5,13 +5,15 @@
 #include <vector>
 #include <unistd.h>
 #include <cassert>
+#include <dirent.h>
+#include <deque>
 
 using namespace std;
 
 struct STATE_OUT
 {
     
-    void print_tape(vector<char>& tape){
+    void print_tape(deque<char>& tape){
         for (int i = 0; i < tape.size(); i++)
         {
             cout << tape[i];
@@ -29,18 +31,22 @@ struct STATE_OUT
 };
 
 int main() {
-    int output_mode;
-    cout <<"how do you want to proccess:\n" << "0-automatically\n1-by pressing the button\n->";
-    cin >> output_mode;
-    cout<<'\n';
+//    int output_mode;
+//    cout <<"how do you want to proccess:\n" << "0-automatically\n1-by pressing the button\n->";
+//    cin >> output_mode;
+//    cout<<'\n';
     STATE_OUT step;
 
-    vector <char> tape;
+    vector <string> test_files;
+    deque<char> tape;
+//    vector <char> tape;
     int start_poz;
     vector < vector <char> >rules;
-
     string line, token;
     char chr;
+
+    
+
     ifstream test_file ("test.txt");
     if (test_file.is_open())
     {
@@ -75,60 +81,67 @@ int main() {
         }
         test_file.close();
     }
-    else cout << "Unable to open file";
+    else {
+        assert(test_file.is_open()!= true);
+        cout << "Unable to open file";
+    }
 
     int command_line_num=0;
     string karetka(tape.size(), '.');
     karetka[start_poz]='|';
+    char action, command;
 
 
     while (1==1)
     {
+        action='0';
         step.print_tape(tape);
         cout << karetka << endl;
         sleep(1);
-
-        switch (rules[command_line_num][0]) {
-            case '-':
-                karetka[start_poz]='.';
-                start_poz -= 1;
-                break;
-            case '+':
-                karetka[start_poz]='.';
-                start_poz += 1;
-                break;
-            case 'X':
-                tape[start_poz] = '0';
-                break;
-            case 'V':
-                tape[start_poz] = '1';
-                break;
-            case '?':
-                step.print_tape(tape);
-                cout << karetka << endl;
-                step.print_rule(rules[command_line_num]);
-                if (tape[start_poz]=='0')
-                    command_line_num= (int)rules[command_line_num][1] - 49;
-                else
-                    command_line_num = (int)rules[command_line_num][2] - 49;
-                goto next;
-                break;
-            case '!':
-                step.print_tape(tape);
-                cout << karetka << endl;
-                step.print_rule(rules[command_line_num]);
-                goto exit;
+        command = rules[command_line_num][0];
+        if (command=='-'){
+            karetka[start_poz]='.';
+            start_poz -= 1;
+        }else if (command=='+'){
+            karetka[start_poz]='.';
+            start_poz += 1;
+        }else if (command=='X')
+            tape[start_poz] = '0';
+        else if (command=='V')
+            tape[start_poz] = '1';
+        else if (command=='?'){
+            action = 'n';
+        }else {
+            action = 'e';
         }
-        karetka[start_poz]='|';
+
+        if(start_poz==tape.size()){
+            karetka.insert(0, 1, '.');
+            tape.push_back('0');
+        } else if (start_poz<0){
+            karetka.insert(0, 1, '.');
+            tape.push_front('0');
+            start_poz = 0;
+        }
+
+        karetka[start_poz] = '|';
         step.print_tape(tape);
         cout << karetka << endl;
         step.print_rule(rules[command_line_num]);
-        command_line_num += 1;
-        next: ;
         sleep(1);
-        if (output_mode == 1)system("pause");
+        if (action == 'n'){
+            if (tape[start_poz]=='0')
+                command_line_num= (int)rules[command_line_num][1] - 49;
+            else
+                command_line_num = (int)rules[command_line_num][2] - 49;
+            continue;
+        }
+        command_line_num += 1;
+//        if (output_mode == 1)system("pause");
+        if (action == 'e')
+            break;
     }
-    exit: ;
+
 
     return 0;
 }
