@@ -12,15 +12,17 @@ using namespace std;
 
 struct STATE_OUT
 {
-    
-    void print_tape(deque<char>& tape){
+
+    void print_tape(deque<char>& tape, string& karetka){
         for (int i = 0; i < tape.size(); i++)
         {
             cout << tape[i];
         }
         cout << endl;
+        cout << karetka << endl;
+
     }
-    void print_rule(vector <char> rule){
+    void print_rule(vector <char>& rule){ // 166 linia
         for (int val = 0; val != 3; val++)
             if (rule[val] == '0')
                 continue;
@@ -28,76 +30,84 @@ struct STATE_OUT
                 cout << rule[val] << ' ';
         cout<<"\n\n";
     }
+    void print_test_files(vector <string> test_files){
+        for (int i=0; i<test_files.size(); ++i)
+            cout << test_files[i] << ' ';
+        cout<<"\n\nChoose file->";
+    }
 };
 
-int main() {
-//    int output_mode;
-//    cout <<"how do you want to proccess:\n" << "0-automatically\n1-by pressing the button\n->";
-//    cin >> output_mode;
-//    cout<<'\n';
-    STATE_OUT step;
-
+struct DATA_MANAGE{
     vector <string> test_files;
+    string file;
     deque<char> tape;
-//    vector <char> tape;
     int start_poz;
     vector < vector <char> >rules;
-    string line, token;
-    char chr;
-
-    
-
-    ifstream test_file ("test.txt");
-    if (test_file.is_open())
-    {
-        while ( getline (test_file, line) ) {
-            if (line.find("tape") != string::npos){
-
-                line = line.substr(line.find('(')+1, line.find(')')-line.find('(')-1);
-                stringstream ss(line);
-
-                while(getline(ss, token, ',')){
-                    assert(token.size() == 1);
-                    chr = token[0];
-                    tape.push_back(chr);
-                }
-
-            }else if(line.find("pos") != string::npos){
-                start_poz = stoi(line.substr(line.find(',') + 1));
-            }else{
-                vector<char> row;
-
-                for (char &c : line) {
-                    if (c != ' ') {
-                        row.push_back(c);
-                    }
-                }
-                while (row.size() != 3)
-                    row.push_back('0');
-
-                rules.push_back(row);
-                if (row[0]=='!')break;
-            }
-        }
-        test_file.close();
-    }
-    else {
-        assert(test_file.is_open()!= true);
-        cout << "Unable to open file";
-    }
-
+    string karetka;
     int command_line_num=0;
-    string karetka(tape.size(), '.');
-    karetka[start_poz]='|';
     char action, command;
 
+    void get_test_files(){
+        char cwd[256];
+        getcwd(cwd, 256);
+        if (auto dir = opendir(cwd)) {
+            while (auto f = readdir(dir)) {
+                if (!f->d_name || f->d_name[0] == '.')
+                    continue;
+                if (((string)(f->d_name)).find("test") != string::npos){
 
-    while (1==1)
-    {
+                    test_files.push_back(f->d_name);                 }
+            }
+            closedir(dir);
+        }
+    }
+    void get_test_file_input(){
+        string line, token;
+        char chr;
+        ifstream test_file (file);
+        if (test_file.is_open())
+        {
+            while ( getline (test_file, line) ) {
+
+                if (line.find("tape") != string::npos){
+
+                    line = line.substr(line.find('(')+1, line.find(')')-line.find('(')-1);
+                    stringstream ss(line);
+
+                    while(getline(ss, token, ',')){
+                        assert(token.size() == 1);
+                        chr = token[0];
+                        tape.push_back(chr);
+                    }
+
+                }else if(line.find("pos") != string::npos){
+                    start_poz = stoi(line.substr(line.find(',') + 1));
+                }else{
+                    vector<char> row;
+
+                    for (char &c : line) {
+                        if (c != ' ') {
+                            row.push_back(c);
+                        }
+                    }
+                    while (row.size() != 3)
+                        row.push_back('0');
+
+                    rules.push_back(row);
+                    if (row[0]=='!')break;
+                }
+            }
+            test_file.close();
+            karetka=string(tape.size(), '.');
+            karetka[start_poz]='|';
+        }
+        else {
+            assert(test_file.is_open()!= true);
+            cout << "Unable to open file";
+        }
+    }
+    void post(){
         action='0';
-        step.print_tape(tape);
-        cout << karetka << endl;
-        sleep(1);
         command = rules[command_line_num][0];
         if (command=='-'){
             karetka[start_poz]='.';
@@ -114,7 +124,14 @@ int main() {
         }else {
             action = 'e';
         }
-
+    }
+    void post_line_check(){
+        if (tape[start_poz]=='0')
+            command_line_num= (int)rules[command_line_num][1] - 49;
+        else
+            command_line_num = (int)rules[command_line_num][2] - 49;
+    }
+    void out_of_range_check(){
         if(start_poz==tape.size()){
             karetka.insert(0, 1, '.');
             tape.push_back('0');
@@ -123,22 +140,37 @@ int main() {
             tape.push_front('0');
             start_poz = 0;
         }
+    }
+};
 
-        karetka[start_poz] = '|';
-        step.print_tape(tape);
-        cout << karetka << endl;
-        step.print_rule(rules[command_line_num]);
+int main() {
+    STATE_OUT step;
+    DATA_MANAGE data;
+
+    data.get_test_files();
+    step.print_test_files(data.test_files);
+    cin>>data.file;
+    data.get_test_file_input();
+
+
+    while (1==1)
+    {
+        step.print_tape(data.tape, data.karetka);
         sleep(1);
-        if (action == 'n'){
-            if (tape[start_poz]=='0')
-                command_line_num= (int)rules[command_line_num][1] - 49;
-            else
-                command_line_num = (int)rules[command_line_num][2] - 49;
+
+        data.post();
+        data.out_of_range_check();
+        data.karetka[data.start_poz] = '|';
+
+        step.print_tape(data.tape,data.karetka);
+        step.print_rule(data.rules[data.command_line_num]);
+        sleep(1);
+        if (data.action=='n'){
+            data.post_line_check();
             continue;
         }
-        command_line_num += 1;
-//        if (output_mode == 1)system("pause");
-        if (action == 'e')
+        data.command_line_num += 1;
+        if (data.action == 'e')
             break;
     }
 
